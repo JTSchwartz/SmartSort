@@ -6,9 +6,9 @@
 
 	<description>
 		<![CDATA[
-    		SmartSort allows you to sort your code without breaking it.
+    		SmartSort allows you to sort your code without breaking it's structure.
     		Take for example a CSS or JSON file: if you sort the whole thing in a lexical order alone, it will lose it's entire structure.
-    		SmartSort will sort in a hierarchical recursive manner in order to sort everything without breaking your code.
+    		SmartSort will sort in a hierarchical manner in order to sort everything without breaking your code.
     	]]>
 	</description>
 
