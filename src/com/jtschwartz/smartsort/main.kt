@@ -10,15 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.refactoring.suggested.startOffset
 
-abstract class SmartSort(open var depth: Int? = null): AnAction() {
+abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	companion object {
 		var doc: Document? = null
 		var editor: Editor? = null
 		var project: Project? = null
 		var psiFile: PsiFile? = null
-		val getLineNumber: (PsiElement) -> Int = {doc!!.getLineNumber(it.startOffset)}
+		val getLineNumber: (PsiElement) -> Int = {doc!!.getLineNumber(it.textOffset)}
 	}
 
 	override fun actionPerformed(e: AnActionEvent) {
@@ -26,21 +25,37 @@ abstract class SmartSort(open var depth: Int? = null): AnAction() {
 		val psiFile = e.getData(CommonDataKeys.PSI_FILE)
 		if (editor == null || psiFile == null) return
 		val offset = editor.caretModel.offset
-		val element = psiFile.findElementAt(offset)
-		val parent = element?.let {getParent(it)}
-		val sortedChildren = sortPsiElements(parent!!.children.copyOf())
+		val element = psiFile.findElementAt(offset) ?: return
+		sort(getParent(element), sortDepth)
+	}
+	
+	private fun sort(element: PsiElement?, depth: Int) {
+		if (depth == 0 || element == null) return
 		
-		WriteCommandAction.runWriteCommandAction(project) {
-			var i = 0
-			var j = 0
-			while (i < parent.children.size) {
-				while (parent.children[i] is PsiWhiteSpace) i++; println("i")
-				while (sortedChildren[j] is PsiWhiteSpace) j++; println("j")
-
-				parent.children[i].replace(sortedChildren[j])
-				i++; j++
+		if (element.children.size > 1 && isSortable(element.children)) {
+			val sortedChildren = sortPsiElements(element.children.copyOf())
+			
+			WriteCommandAction.runWriteCommandAction(project) {
+				var i = 0
+				var j = 0
+				while (i < element.children.size) {
+					while (element.children[i] is PsiWhiteSpace) i++
+					while (sortedChildren[j] is PsiWhiteSpace) j++
+					
+					element.children[i].replace(sortedChildren[j])
+					i++; j++
+				}
 			}
 		}
+
+		element.children.forEach {sort(it, depth - 1)}
+	}
+	
+	private fun isSortable(psiArray: Array<PsiElement>): Boolean {
+		for (i in 1 until psiArray.size) {
+			if (getLineNumber(psiArray[i - 1]) == getLineNumber(psiArray[i])) return false
+		}
+		return true
 	}
 
 	override fun update(e: AnActionEvent) {
@@ -96,14 +111,14 @@ abstract class SmartSort(open var depth: Int? = null): AnAction() {
 		if (psiArray.size <= 1) {
 			return psiArray
 		}
-
+		
 		val middle = psiArray.size / 2
 		val left = psiArray.copyOfRange(0, middle);
 		val right = psiArray.copyOfRange(middle, psiArray.size);
-
+		
 		return mergeSort(sortPsiElements(left), sortPsiElements(right))
 	}
 }
 
 class RecursiveSort: SmartSort()
-class SingleDepthSort(override var depth: Int? = 1): SmartSort()
+class SingleDepthSort(override var sortDepth: Int = 1): SmartSort()
