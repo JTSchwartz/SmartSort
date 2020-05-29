@@ -7,9 +7,14 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTextField
 
 abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	companion object {
@@ -39,21 +44,33 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 				var i = 0
 				var j = 0
 				while (i < element.children.size) {
-					while (element.children[i] is PsiWhiteSpace) i++
-					while (sortedChildren[j] is PsiWhiteSpace) j++
+					try {
+						while (element.children[i] is PsiWhiteSpace) i++
+					} catch (e: ArrayIndexOutOfBoundsException) {
+						continue
+					}
+					
+					try {
+						while (sortedChildren[j] is PsiWhiteSpace) j++
+					} catch (e: ArrayIndexOutOfBoundsException) {
+						continue
+					}
 					
 					element.children[i].replace(sortedChildren[j])
 					i++; j++
 				}
 			}
+			
+			element.children.forEach {sort(it, depth - 1)}
+		} else {
+			
+			element.children.forEach {sort(it, depth)}
 		}
-
-		element.children.forEach {sort(it, depth - 1)}
 	}
 	
 	private fun isSortable(psiArray: Array<PsiElement>): Boolean {
 		for (i in 1 until psiArray.size) {
-			if (getLineNumber(psiArray[i - 1]) == getLineNumber(psiArray[i])) return false
+			if (psiArray[i] !is PsiWhiteSpace && getLineNumber(psiArray[i - 1]) == getLineNumber(psiArray[i])) return false
 		}
 		return true
 	}
@@ -86,22 +103,18 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 
 		while (i < left.count() && j < right.count()) {
 			if (left[i].text.toLowerCase() <= right[j].text.toLowerCase()) {
-				sorted.add(left[i].copy())
-				i++
+				sorted.add(left[i++].copy())
 			} else {
-				sorted.add(right[j].copy())
-				j++
+				sorted.add(right[j++].copy())
 			}
 		}
 
 		while (i < left.size) {
-			sorted.add(left[i].copy())
-			i++
+			sorted.add(left[i++].copy())
 		}
 
 		while (j < right.size) {
-			sorted.add(right[j].copy())
-			j++
+			sorted.add(right[j++].copy())
 		}
 
 		return sorted.toTypedArray();
@@ -122,3 +135,32 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 
 class RecursiveSort: SmartSort()
 class SingleDepthSort(override var sortDepth: Int = 1): SmartSort()
+
+class SelectiveDepthSort: SmartSort() {
+	
+	override fun actionPerformed(e: AnActionEvent) {
+		if (DepthPrompt().showAndGet()) {
+			sortDepth = DepthPrompt.depthField.text.toInt()
+			super.actionPerformed(e)
+		}
+	}
+}
+
+class DepthPrompt: DialogWrapper(true) {
+	companion object {
+		val depthField = JTextField()
+	}
+	
+	init {
+		init()
+		title = "Set Sorting Depth"
+	}
+	
+	override fun createCenterPanel(): JComponent? {
+		val panel = JPanel(BorderLayout())
+		panel.add(depthField)
+		
+		return panel
+	}
+	
+}

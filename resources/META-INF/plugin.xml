@@ -27,6 +27,10 @@
 	</extensions>
 
 	<actions>
+		<action id="com.jtschwartz.smartsort.SelectiveDepthSort" class="com.jtschwartz.smartsort.SelectiveDepthSort"
+				text="Selective Depth Sort">
+			<add-to-group group-id="EditSmartGroup" anchor="after" relative-to-action="EditorSortLines"/>
+		</action>
 		<action id="com.jtschwartz.smartsort.SingleDepthSort" class="com.jtschwartz.smartsort.SingleDepthSort"
 				text="Single-Depth SmartSort"
 				description="Sort the first level of the selection (Sorts based on code blocks in an attempt to not break code logic)">
