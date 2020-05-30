@@ -1,5 +1,6 @@
 package com.jtschwartz.smartsort
 
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -45,13 +46,13 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 				var j = 0
 				while (i < element.children.size) {
 					try {
-						while (element.children[i] is PsiWhiteSpace) i++
+						while (element.children[i].isWhitespace()) i++
 					} catch (e: ArrayIndexOutOfBoundsException) {
 						continue
 					}
 					
 					try {
-						while (sortedChildren[j] is PsiWhiteSpace) j++
+						while (sortedChildren[j].isWhitespace()) j++
 					} catch (e: ArrayIndexOutOfBoundsException) {
 						continue
 					}
@@ -69,10 +70,17 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	}
 	
 	private fun isSortable(psiArray: Array<PsiElement>): Boolean {
+		val origin = getLineNumber(psiArray[0])
+		
 		for (i in 1 until psiArray.size) {
-			if (psiArray[i] !is PsiWhiteSpace && getLineNumber(psiArray[i - 1]) == getLineNumber(psiArray[i])) return false
+			if (origin != getLineNumber(psiArray[i])) return true
 		}
-		return true
+		
+		return false
+	}
+	
+	private fun PsiElement.isWhitespace(): Boolean {
+		return this is PsiWhiteSpace || if (this.children.size == 1) this.firstChild is PsiWhiteSpace else false
 	}
 
 	override fun update(e: AnActionEvent) {
@@ -80,6 +88,16 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		editor = e.getData(CommonDataKeys.EDITOR)
 		project = e.project
 		psiFile = e.getData(CommonDataKeys.PSI_FILE)
+		val lang = psiFile?.language
+		
+		if ( lang == Language.findLanguageByID("XML") ||
+			lang == Language.findLanguageByID("HTML") ||
+			lang == Language.findLanguageByID("Atom") ||
+			lang == Language.findLanguageByID("SVG") ||
+			lang == Language.findLanguageByID("RSS")) {
+			e.presentation.isEnabledAndVisible = false
+			return
+		}
 
 		e.presentation.isVisible = doc != null && editor != null && psiFile != null
 		e.presentation.isEnabled = e.presentation.isVisible && editor!!.caretModel.caretCount == 1
@@ -92,6 +110,8 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 			while (getLineNumber(el) == getLineNumber(element)) el = el.parent
 			el
 		} catch (e: IllegalStateException) {
+			psiFile
+		} catch (e: IndexOutOfBoundsException) {
 			psiFile
 		}
 	}
