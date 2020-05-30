@@ -137,7 +137,7 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 			sorted.add(right[j++].copy())
 		}
 
-		return sorted.toTypedArray();
+		return sorted.toTypedArray()
 	}
 
 	private fun sortPsiElements(psiArray: Array<PsiElement>): Array<PsiElement> {
@@ -146,8 +146,8 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		}
 		
 		val middle = psiArray.size / 2
-		val left = psiArray.copyOfRange(0, middle);
-		val right = psiArray.copyOfRange(middle, psiArray.size);
+		val left = psiArray.copyOfRange(0, middle)
+		val right = psiArray.copyOfRange(middle, psiArray.size)
 		
 		return mergeSort(sortPsiElements(left), sortPsiElements(right))
 	}

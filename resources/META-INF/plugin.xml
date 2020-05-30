@@ -1,7 +1,7 @@
 <idea-plugin>
 	<id>com.jtschwartz.smartsort</id>
 	<name>SmartSort</name>
-	<version>1.0</version>
+	<version>1.0.1</version>
 	<vendor email="jacob@jtschwartz.com" url="https://jtschwartz.com">Jacob Schwartz</vendor>
 
 	<description>
@@ -22,7 +22,7 @@
     	]]>
 	</change-notes>
 
-	<idea-version since-build="173.0"/>
+	<idea-version since-build="183.0"/>
 
 	<depends>com.intellij.modules.lang</depends>
 
