@@ -24,6 +24,9 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		var project: Project? = null
 		var psiFile: PsiFile? = null
 		val getLineNumber: (PsiElement) -> Int = {doc!!.getLineNumber(it.textOffset)}
+		var hasSelection = false
+		var selectionStart = 0
+		var selectionEnd = 0
 	}
 
 	override fun actionPerformed(e: AnActionEvent) {
@@ -39,12 +42,22 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		if (depth == 0 || element == null) return
 		
 		if (element.children.size > 1 && isSortable(element.children)) {
-			val sortedChildren = sortPsiElements(element.children.copyOf())
-			
+			var start = 0
+			var end = element.children.size
+
+			val sortedChildren = if (hasSelection) {
+				while (start < end && getLineNumber(element.children[start]) < selectionStart) start++
+				while (end > 0 && getLineNumber(element.children[end - 1]) > selectionEnd) end--
+
+				if (start < end) sortPsiElements(element.children.copyOfRange(start, end)) else return
+			} else {
+				sortPsiElements(element.children.copyOf())
+			}
+
 			WriteCommandAction.runWriteCommandAction(project) {
-				var i = 0
+				var i = start
 				var j = 0
-				while (i < element.children.size) {
+				while (i < end) {
 					try {
 						while (element.children[i].isWhitespace()) i++
 					} catch (e: ArrayIndexOutOfBoundsException) {
@@ -89,18 +102,26 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		project = e.project
 		psiFile = e.getData(CommonDataKeys.PSI_FILE)
 		val lang = psiFile?.language
-		
-		if ( lang == Language.findLanguageByID("XML") ||
+
+		if (lang == Language.findLanguageByID("Atom") ||
 			lang == Language.findLanguageByID("HTML") ||
-			lang == Language.findLanguageByID("Atom") ||
+			lang == Language.findLanguageByID("RSS") ||
 			lang == Language.findLanguageByID("SVG") ||
-			lang == Language.findLanguageByID("RSS")) {
+			lang == Language.findLanguageByID("XML")) {
 			e.presentation.isEnabledAndVisible = false
 			return
 		}
 
 		e.presentation.isVisible = doc != null && editor != null && psiFile != null
 		e.presentation.isEnabled = e.presentation.isVisible && editor!!.caretModel.caretCount == 1
+		
+		editor?.let {
+			hasSelection = editor!!.selectionModel.hasSelection()
+			if (hasSelection) {
+				selectionStart = doc!!.getLineNumber(editor!!.selectionModel.selectionStart)
+				selectionEnd = doc!!.getLineNumber(editor!!.selectionModel.selectionEnd)
+			}
+		}
 	}
 
 	private fun getParent(element: PsiElement): PsiElement? {
@@ -140,14 +161,14 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		return sorted.toTypedArray()
 	}
 
-	private fun sortPsiElements(psiArray: Array<PsiElement>): Array<PsiElement> {
+	private fun sortPsiElements(psiArray: Array<PsiElement>, start: Int = 0, end: Int = psiArray.size): Array<PsiElement> {
 		if (psiArray.size <= 1) {
 			return psiArray
 		}
 		
 		val middle = psiArray.size / 2
-		val left = psiArray.copyOfRange(0, middle)
-		val right = psiArray.copyOfRange(middle, psiArray.size)
+		val left = psiArray.copyOfRange(start, middle)
+		val right = psiArray.copyOfRange(middle, end)
 		
 		return mergeSort(sortPsiElements(left), sortPsiElements(right))
 	}
