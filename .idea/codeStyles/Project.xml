@@ -20,11 +20,15 @@
       <option name="SPACE_BEFORE_EXTEND_COLON" value="false" />
       <option name="INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD" value="false" />
       <option name="ALIGN_IN_COLUMNS_CASE_BRANCH" value="true" />
+      <option name="NAME_COUNT_TO_USE_STAR_IMPORT" value="3" />
       <option name="CONTINUATION_INDENT_IN_PARAMETER_LISTS" value="false" />
       <option name="CONTINUATION_INDENT_IN_ARGUMENT_LISTS" value="false" />
       <option name="CONTINUATION_INDENT_FOR_CHAINED_CALLS" value="false" />
       <option name="CONTINUATION_INDENT_IN_IF_CONDITIONS" value="false" />
     </JetCodeStyleSettings>
+    <ScalaCodeStyleSettings>
+      <option name="MULTILINE_STRING_CLOSING_QUOTES_ON_NEW_LINE" value="true" />
+    </ScalaCodeStyleSettings>
     <codeStyleSettings language="ECMA Script Level 4">
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
@@ -70,8 +74,11 @@
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="JAVA">
+      <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
+        <option name="SMART_TABS" value="true" />
+        <option name="KEEP_INDENTS_ON_EMPTY_LINES" value="true" />
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="JSON">

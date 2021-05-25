@@ -104,14 +104,12 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	}
 
 	private fun getParent(element: PsiElement): PsiElement? {
-		var el = element
-
 		return try {
+			var el = element
 			while (getLineNumber(el) == getLineNumber(element)) el = el.parent
+			
 			el
-		} catch (e: IllegalStateException) {
-			psiFile
-		} catch (e: IndexOutOfBoundsException) {
+		} catch (e: RuntimeException) {
 			psiFile
 		}
 	}
@@ -129,21 +127,14 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 			}
 		}
 
-		while (i < left.size) {
-			sorted.add(left[i++].copy())
-		}
-
-		while (j < right.size) {
-			sorted.add(right[j++].copy())
-		}
+		while (i < left.size) sorted.add(left[i++].copy())
+		while (j < right.size) sorted.add(right[j++].copy())
 
 		return sorted.toTypedArray()
 	}
 
 	private fun sortPsiElements(psiArray: Array<PsiElement>): Array<PsiElement> {
-		if (psiArray.size <= 1) {
-			return psiArray
-		}
+		if (psiArray.size <= 1) return psiArray
 		
 		val middle = psiArray.size / 2
 		val left = psiArray.copyOfRange(0, middle)

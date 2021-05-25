@@ -32,7 +32,7 @@
 
 	<actions>
 		<action id="com.jtschwartz.smartsort.SelectiveDepthSort" class="com.jtschwartz.smartsort.SelectiveDepthSort"
-				text="Selective Depth Sort">
+				text="Selective-Depth SmartSort">
 			<add-to-group group-id="EditSmartGroup" anchor="after" relative-to-action="EditorSortLines"/>
 			<keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt S"/>
 		</action>
