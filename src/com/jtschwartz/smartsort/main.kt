@@ -1,31 +1,25 @@
 package com.jtschwartz.smartsort
 
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 
-abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
+open class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	companion object {
 		var doc: Document? = null
 		var editor: Editor? = null
 		var project: Project? = null
 		var psiFile: PsiFile? = null
-		val getLineNumber: (PsiElement) -> Int = {doc!!.getLineNumber(it.textOffset)}
+		val getLineNumber: (PsiElement) -> Int = { doc!!.getLineNumber(it.textOffset) }
 	}
-
+	
 	override fun actionPerformed(e: AnActionEvent) {
 		val editor = e.getData(CommonDataKeys.EDITOR)
 		val psiFile = e.getData(CommonDataKeys.PSI_FILE)
@@ -38,34 +32,37 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	private fun sort(element: PsiElement?, depth: Int) {
 		if (depth == 0 || element == null) return
 		
-		if (element.children.size > 1 && isSortable(element.children)) {
-			val sortedChildren = sortPsiElements(element.children.copyOf())
-			
-			WriteCommandAction.runWriteCommandAction(project) {
-				var i = 0
-				var j = 0
-				while (i < element.children.size) {
-					try {
-						while (element.children[i].isWhitespace()) i++
-					} catch (e: ArrayIndexOutOfBoundsException) {
-						continue
+		try {
+			if (element.children.size > 1 && isSortable(element.children)) {
+				val sortedChildren = sortPsiElements(element.children.copyOf())
+				
+				WriteCommandAction.runWriteCommandAction(project) {
+					var i = 0
+					var j = 0
+					while (i < element.children.size) {
+						try {
+							while (element.children[i].isWhitespace()) i++
+						} catch (e: ArrayIndexOutOfBoundsException) {
+							continue
+						}
+						
+						try {
+							while (sortedChildren[j].isWhitespace()) j++
+						} catch (e: ArrayIndexOutOfBoundsException) {
+							continue
+						}
+						
+						element.children[i].replace(sortedChildren[j])
+						i++; j++
 					}
-					
-					try {
-						while (sortedChildren[j].isWhitespace()) j++
-					} catch (e: ArrayIndexOutOfBoundsException) {
-						continue
-					}
-					
-					element.children[i].replace(sortedChildren[j])
-					i++; j++
 				}
+				
+				element.children.forEach { sort(it, depth - 1) }
+			} else {
+				element.children.forEach { sort(it, depth) }
 			}
-			
-			element.children.forEach {sort(it, depth - 1)}
-		} else {
-			
-			element.children.forEach {sort(it, depth)}
+		} catch (e: NullPointerException) {
+			e.printStackTrace()
 		}
 	}
 	
@@ -82,7 +79,7 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	private fun PsiElement.isWhitespace(): Boolean {
 		return this is PsiWhiteSpace || if (this.children.size == 1) this.firstChild is PsiWhiteSpace else false
 	}
-
+	
 	override fun update(e: AnActionEvent) {
 		doc = editor?.document
 		editor = e.getData(CommonDataKeys.EDITOR)
@@ -90,19 +87,15 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 		psiFile = e.getData(CommonDataKeys.PSI_FILE)
 		val lang = psiFile?.language
 		
-		if ( lang == Language.findLanguageByID("XML") ||
-			lang == Language.findLanguageByID("HTML") ||
-			lang == Language.findLanguageByID("Atom") ||
-			lang == Language.findLanguageByID("SVG") ||
-			lang == Language.findLanguageByID("RSS")) {
+		if (listOf("Atom", "HTML", "RSS", "SVG", "XML").any { lang == Language.findLanguageByID(it) }) {
 			e.presentation.isEnabledAndVisible = false
 			return
 		}
-
+		
 		e.presentation.isVisible = doc != null && editor != null && psiFile != null
 		e.presentation.isEnabled = e.presentation.isVisible && editor!!.caretModel.caretCount == 1
 	}
-
+	
 	private fun getParent(element: PsiElement): PsiElement? {
 		return try {
 			var el = element
@@ -113,12 +106,12 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 			psiFile
 		}
 	}
-
+	
 	private fun mergeSort(left: Array<PsiElement>, right: Array<PsiElement>): Array<PsiElement> {
 		var i = 0
 		var j = 0
 		val sorted: MutableList<PsiElement> = mutableListOf()
-
+		
 		while (i < left.count() && j < right.count()) {
 			if (left[i].text.toLowerCase() <= right[j].text.toLowerCase()) {
 				sorted.add(left[i++].copy())
@@ -126,13 +119,13 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 				sorted.add(right[j++].copy())
 			}
 		}
-
+		
 		while (i < left.size) sorted.add(left[i++].copy())
 		while (j < right.size) sorted.add(right[j++].copy())
-
+		
 		return sorted.toTypedArray()
 	}
-
+	
 	private fun sortPsiElements(psiArray: Array<PsiElement>): Array<PsiElement> {
 		if (psiArray.size <= 1) return psiArray
 		
@@ -144,11 +137,9 @@ abstract class SmartSort(open var sortDepth: Int = -1): AnAction() {
 	}
 }
 
-class RecursiveSort: SmartSort()
-class SingleDepthSort(override var sortDepth: Int = 1): SmartSort()
+class SingleDepthSmartSort(override var sortDepth: Int = 1): SmartSort()
 
-class SelectiveDepthSort: SmartSort() {
-	
+class SelectiveDepthSmartSort: SmartSort() {
 	override fun actionPerformed(e: AnActionEvent) {
 		if (DepthPrompt().showAndGet()) {
 			sortDepth = DepthPrompt.depthField.text.toInt()
@@ -173,5 +164,4 @@ class DepthPrompt: DialogWrapper(true) {
 		
 		return panel
 	}
-	
 }
