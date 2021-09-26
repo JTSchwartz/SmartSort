@@ -1,18 +1,25 @@
 <idea-plugin>
 	<id>com.jtschwartz.smartsort</id>
 	<name>SmartSort</name>
-	<version>1.0.1</version>
+	<version>1.0.3</version>
 	<vendor email="jacob@jtschwartz.com" url="https://jtschwartz.com">Jacob Schwartz</vendor>
 
 	<description>
 		<![CDATA[
-    		SmartSort allows you to sort your code without breaking it's structure.
-    		Take for example a CSS or JSON file: if you sort the whole thing in a lexical order alone, it will lose it's entire structure.
-    		SmartSort will sort in a hierarchical manner in order to sort everything without breaking your code.
-
+		<p>
+    		SmartSort allows you to sort your code without breaking it's structure.<br/>
+    		Take for example a CSS or JSON file: if you sort the whole thing in a lexical order alone, it will lose it's entire structure.<br/>
+    		SmartSort will sort in a hierarchical manner in order to sort everything without breaking your code, like the IDE's builtin system.
+		</p>
+		<p>
     		SmartSort will sort the code block your cursor is located in (limiting to a selection coming soon), as well as nested code blocks depending on the sorting depth you choose. Out of the box you are given a one click stop to fully recursive sorting, as well as only sorting the single layer your cursor is in, though there is also a "Selective Depth" option that will prompt you for the depth of your choosing.
-
+		</p>
+		<p>
+			SmartSort can be accessed via the Edit menu, just below the builtin Sort functionality.
+		</p>
+		<p>
     		This plugin does not work for XML or languages based off of it, such as HTML and SVG. This is partially caused by the way in which XML is parsed, but also because XML is intended to be ordered in a specific way, context over lexical order.
+    	</p>
     	]]>
 	</description>
 
@@ -31,7 +38,8 @@
 	</extensions>
 
 	<actions>
-		<action id="com.jtschwartz.smartsort.SelectiveDepthSmartSort" class="com.jtschwartz.smartsort.SelectiveDepthSmartSort"
+		<action id="com.jtschwartz.smartsort.SelectiveDepthSmartSort"
+				class="com.jtschwartz.smartsort.SelectiveDepthSmartSort"
 				text="Selective-Depth SmartSort">
 			<add-to-group group-id="EditSmartGroup" anchor="after" relative-to-action="EditorSortLines"/>
 			<keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt S"/>
