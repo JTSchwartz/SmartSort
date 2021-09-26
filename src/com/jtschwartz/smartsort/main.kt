@@ -142,7 +142,11 @@ class SingleDepthSmartSort(override var sortDepth: Int = 1): SmartSort()
 class SelectiveDepthSmartSort: SmartSort() {
 	override fun actionPerformed(e: AnActionEvent) {
 		if (DepthPrompt().showAndGet()) {
-			sortDepth = DepthPrompt.depthField.text.toInt()
+			sortDepth = try {
+				DepthPrompt.depthField.text.toInt()
+			} catch (e: NumberFormatException) {
+				0
+			}
 			super.actionPerformed(e)
 		}
 	}
